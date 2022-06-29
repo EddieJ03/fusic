@@ -113,7 +113,7 @@ const ChatDisplay = ({ user , clickedUser }) => {
         <div style={{textAlign: 'center'}}>Loading. . .</div>
         :
         <>
-            <div className="chat-display" ref={chatContainer}>
+            <div className="chat-display" style={{height: '50vh'}} ref={chatContainer}>
                 {descendingOrderMessages.map((message, _index) => (
                     <div key={_index}>
                             <div style={{display: 'flex', justifyContent: message.user ? 'flex-end' : 'flex-start'}} >

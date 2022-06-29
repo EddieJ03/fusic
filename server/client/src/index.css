@@ -23,14 +23,14 @@ h2 {
     color: rgb(255,255,255);
     text-transform: uppercase;
     font-size: 15px;
-    background-color: #1DB954;
+    background-color: #14397d;
     padding: 12px 30px;
     border-radius: 30px;
     border: none;
 }
 
 .primary-button:hover {
-    background-color: #3ccc6f;
+    background-color: #1c4288;
     cursor: pointer;
 }
 
@@ -58,13 +58,13 @@ nav {
     width: 100%;
     display: flex;
     justify-content: space-between;
-    background-color: black;
+    background-color: #77b5d9;
     color: white;
 }
 
 nav .nav-button {
     color: white;
-    background-color: #1DB954;
+    background-color: #14397d;
     font-size: 20px;
     padding: 10px 20px;
     border-radius: 10px;
@@ -74,7 +74,7 @@ nav .nav-button {
 
 nav .nav-button:hover {
     cursor: pointer;
-    background-color: #3cce6f;
+    background-color: #1c4288;
 }
 
 nav .logo-container {
@@ -91,7 +91,7 @@ nav .logo-container .logo {
     width: 100vw;
     height: 100vh;
     position: fixed;
-    background-color: black;
+    background-color: #77b5d9;
 }
 
 .home {
@@ -100,7 +100,7 @@ nav .logo-container .logo {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: #d7eaf3;
 }
 
 /*-------- Auth Modal --------*/
@@ -231,7 +231,7 @@ nav .logo-container .logo {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 90vh;
+    background-color: #d7eaf3;
 }
 
 .swipe {
@@ -271,7 +271,7 @@ nav .logo-container .logo {
 }
 
 .chat-container .chat-container-header {
-    background-color: rgb(49, 45, 45);
+    background-color: #14397d;
     height: 100px;
     display: flex;
     justify-content: space-between;
@@ -281,7 +281,7 @@ nav .logo-container .logo {
 .chat-container .option {
     border: none;
     background-color: rgb(255, 255, 255);
-    border-bottom: solid 4px #1DB954;
+    border-bottom: solid 4px #77b5d9;
     font-size: 20px;
     margin: 2px;
     padding: 10px;
@@ -298,27 +298,23 @@ nav .logo-container .logo {
     color: rgb(255, 255, 255);
 }
 
-.img-container {
-    height: 30px;
-    width: 30px;
-    border-radius: 15px;
-    overflow: hidden;
-}
 
 .img-container img {
-    width: 100%;
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 50%;
 }
 
 .match:hover {
     cursor: pointer;
-    background-color: beige;
+    background-color: #d7eaf3;
 }
 
 /*-------- Chat Display --------*/
 .chat-display,
 .matches-display {
     padding: 20px;
-    height: 60vh;
     overflow-y: auto;
 }
 
@@ -339,7 +335,8 @@ nav .logo-container .logo {
 .button-style {
     height: 30px;
     width: 75px;
-    background-color: #1DB954;
+    background-color: #14397d;
+    color: white;
     text-align: center;
     border-radius: 10%;
     padding-top: 5px;
@@ -347,7 +344,7 @@ nav .logo-container .logo {
 
 .button-style:hover {
     cursor: pointer;
-    background-color: #3cce6f;
+    background-color: #1c4288;
 }
 
 

@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import {useNavigate} from 'react-router-dom'
 
 const MatchesDisplay = ({ matches, setClickedUser }) => {
+  const [loading, setLoading] = useState(false);
   const [matchedProfiles, setMatchedProfiles] = useState(null);
   const [cookies, setCookie, removeCookie] = useCookies(null);
 
@@ -42,12 +43,14 @@ const MatchesDisplay = ({ matches, setClickedUser }) => {
         params: { userIds: JSON.stringify(matchedUserIds) },
       });
       setMatchedProfiles(response.data);
+      setLoading(false);
     } catch (error) {
       clear();
     }
   };
 
   useEffect(() => {
+    setLoading(true);
     getMatches();
   }, [matches]);
 
@@ -58,7 +61,10 @@ const MatchesDisplay = ({ matches, setClickedUser }) => {
   );
 
   return (
-    <div className="matches-display">
+    loading ?
+    <p style={{textAlign: 'center'}}>Loading. . .</p>
+    :
+    <div className="matches-display" style={{height: '70vh'}}>
       {filteredMatchedProfiles?.map((match, _index) => (
         <div
           key={_index}

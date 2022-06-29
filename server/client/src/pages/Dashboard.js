@@ -114,15 +114,15 @@ const Dashboard = () => {
 
     return (
         cookies.AuthToken && user && user.onboarded ? 
-        <>
+        <div style={{display: 'flex', flexDirection: 'column', height: '100vh'}}>
             <nav>
-                <h1 style={{margin: '15px'}}>Fusic</h1>
+                <h1 style={{margin: '15px', fontSize: '2em'}}>Fusic</h1>
                 <div style={{display: 'flex', flexDirection: 'row'}}>
                     <div className="nav-button" onClick={logout}>Logout</div>
                     <div className="nav-button" onClick={updateProfile}>Update</div>
                 </div>
             </nav>
-            <div className="dashboard">
+            <div style={{flexGrow: '1'}} className="dashboard">
                 <ChatContainer user={user}/>
                 <div className="swipe-container">
                     <div>
@@ -206,7 +206,7 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
-        </> : 
+        </div> : 
         <></>
     )
 }
