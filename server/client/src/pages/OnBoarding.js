@@ -110,7 +110,7 @@ const OnBoarding = () => {
         cookies.AuthToken && !loading ? 
         <>
             <div className="onboarding">
-                <h2>SET PROFILE</h2>
+                <h1 style={{margin: '0px', padding: '10px'}}>SET PROFILE</h1>
 
                 <form onSubmit={handleSubmit}>
                     <section>
