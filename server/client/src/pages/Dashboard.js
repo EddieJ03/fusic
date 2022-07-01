@@ -3,7 +3,9 @@ import {useEffect, useState} from 'react'
 import ChatContainer from '../components/ChatContainer'
 import {useNavigate} from 'react-router-dom'
 import {useCookies} from 'react-cookie'
+import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify';
+import SpotifyLogo from '../assets/Spotify_Logo_RGB_Green.png'
 import axios from 'axios'
 
 const Dashboard = () => {
@@ -136,6 +138,7 @@ const Dashboard = () => {
                                 onSwipe={(dir) => swiped(dir, match.user_id)}
                                 onCardLeftScreen={() => outOfFrame(match.first_name)}>
                                 <div className="card">
+                                    <img src={SpotifyLogo} style={{height: '30px', width: 'auto', alignSelf: 'flex-end', marginRight: '20px'}}/>
                                     <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', width: '100%'}}>
                                         <img style={{height: '100px', width: '100px', borderRadius: '10%', objectFit: 'cover'}} src={match.url}/>
                                         <div style={{textAlign: 'left'}}>
@@ -149,9 +152,9 @@ const Dashboard = () => {
                                             <h3 style={{marginTop: '25px'}}>Top Artists!</h3>
                                             <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-start', width: '100%'}}>
                                                 {match.artists.map((artist, idx) => 
-                                                    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100px'}}>
+                                                    <div key={idx} style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100px'}}>
                                                         <img style={{height: '100px', width: '100px', borderRadius: '50%', objectFit: 'cover'}} src={artist.url.url}/>
-                                                        <p key={idx}>{artist.name}</p>
+                                                        <a style={{color: 'white'}} href={artist.spotify}>{artist.name}</a>
                                                     </div>
 
                                                 )}
@@ -166,9 +169,9 @@ const Dashboard = () => {
                                             <h3 style={{marginTop: '25px'}}>Top Tracks!</h3>
                                             <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-start', width: '100%'}}> 
                                                 {match.tracks.map((track, idx) => 
-                                                    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100px'}}>
+                                                    <div key={idx} style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100px'}}>
                                                         <img style={{height: '100px', width: '100px', borderRadius: '50%', objectFit: 'cover'}} src={track.url.url}/>
-                                                        <p key={idx}>{track.name}</p>
+                                                        <a style={{color: 'white'}} href={track.spotify}>{track.name}</a>
                                                     </div>
                                                 )}
                                             </div> 

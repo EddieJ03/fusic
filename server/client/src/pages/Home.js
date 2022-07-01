@@ -43,7 +43,7 @@ const Home = ({ setExpiresIn, setRefreshToken, setAccessToken }) => {
             let topArtists = [];
 
             for(let i = 0; i < artistData.length; i++) {
-                let artist = { name: artistData[i].name, url: artistData[i].images[0] };
+                let artist = { name: artistData[i].name, url: artistData[i].images[0], spotify: artistData[i].external_urls.spotify };
                 topArtists.push(artist);
             }
 
@@ -54,7 +54,7 @@ const Home = ({ setExpiresIn, setRefreshToken, setAccessToken }) => {
             let topTracks = [];
 
             for(let i = 0; i < topTracksData.length; i++) {
-                let track = { name: topTracksData[i].name, url: topTracksData[i].album.images[0] };              
+                let track = { name: topTracksData[i].name, url: topTracksData[i].album.images[0], spotify: topTracksData[i].external_urls.spotify };              
                 topTracks.push(track);
             }
 
