@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { toast } from 'react-toastify';
 import {useNavigate} from 'react-router-dom'
+import DefaultHeadshot from '../assets/default_headshot.png'
 
 const MatchesDisplay = ({ matches, setClickedUser }) => {
   const [loading, setLoading] = useState(false);
@@ -29,19 +30,16 @@ const MatchesDisplay = ({ matches, setClickedUser }) => {
           clear();
       }
 
-      const verifyToken = await axios.get('/verify', {
+      await axios.get('/verify', {
           headers: {
             Authorization: 'Bearer ' + cookies.AuthToken 
           }
       })
 
-      if(!verifyToken.data.verified) {
-          clear();
-      }
-
       const response = await axios.get("/users", {
         params: { userIds: JSON.stringify(matchedUserIds) },
       });
+      console.log(response);
       setMatchedProfiles(response.data);
       setLoading(false);
     } catch (error) {
@@ -73,7 +71,7 @@ const MatchesDisplay = ({ matches, setClickedUser }) => {
         >
           <div className="match" style={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
             <div className="img-container">
-              <img src={match?.url} alt={match?.first_name + " profile"} />
+              <img src={match?.picture === "none" ? DefaultHeadshot : match?.picture} alt={match?.first_name + " profile"} />
             </div>
             <h3 style={{marginLeft: '5px'}}>{match?.first_name}</h3>
           </div>

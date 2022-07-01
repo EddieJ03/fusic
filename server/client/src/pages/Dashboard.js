@@ -3,10 +3,28 @@ import {useEffect, useState} from 'react'
 import ChatContainer from '../components/ChatContainer'
 import {useNavigate} from 'react-router-dom'
 import {useCookies} from 'react-cookie'
-import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify';
 import SpotifyLogo from '../assets/Spotify_Logo_RGB_Green.png'
+import DefaultHeadshot from '../assets/default_headshot.png'
+import Modal from 'react-modal';
 import axios from 'axios'
+
+Modal.setAppElement('#root');
+
+const customStyles = {
+    content: {
+        top: '50%',
+        left: '50%',
+        right: 'auto',
+        bottom: 'auto',
+        marginRight: '-50%',
+        transform: 'translate(-50%, -50%)',
+        width:'300px',
+        borderRadius: '15px',
+        backgroundColor: '#14397d',
+        color: 'white'
+    },
+};
 
 const Dashboard = () => {
     const [user, setUser] = useState(null);
@@ -14,13 +32,22 @@ const Dashboard = () => {
     const [matchGenreUsers, setMatchGenreUsers] = useState(null);
     const [lastDirection, setLastDirection] = useState()
     const [cookies, setCookie, removeCookie] = useCookies(null);
+    const [modalIsOpen, setIsOpen] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
+    function openModal() {
+        setIsOpen(true);
+    }
+
+    function closeModal() {
+        setIsOpen(false);
+    }
 
     let navigate = useNavigate();
 
     const notify = () => toast.warning("You need to login again!");
 
     const clear = () => {
-        console.log("called clear")
         notify();
         removeCookie('UserId', cookies.UserId)
         removeCookie('AuthToken', cookies.AuthToken)
@@ -42,15 +69,11 @@ const Dashboard = () => {
 
     const getUser = async () => {
         try {
-            const verifyToken = await axios.get('/verify', {
+            await axios.get('/verify', {
                 headers: {
                   Authorization: 'Bearer ' + cookies.AuthToken 
                 }
             })
-
-            if(!verifyToken.data.verified) {
-                clear();
-            }
 
             const response = await axios.get('/user', {
                 params: {userId: cookies.UserId}
@@ -96,10 +119,6 @@ const Dashboard = () => {
         setLastDirection(direction)
     }
 
-    const outOfFrame = (name) => {
-        console.log(name + ' left the screen!')
-    }
-
     const logout = () => {
         removeCookie('UserId', cookies.UserId)
         removeCookie('AuthToken', cookies.AuthToken)
@@ -108,6 +127,23 @@ const Dashboard = () => {
 
     const updateProfile = () => {
         navigate("/onboarding");
+    }
+
+    const deleteProfile = async () => {
+        setDeleting(true);
+        try {
+            await axios.delete("/delete", {
+                data: {
+                    userId: cookies.UserId
+                }
+            });
+            removeCookie('UserId', cookies.UserId)
+            removeCookie('AuthToken', cookies.AuthToken)
+            closeModal();
+            navigate("/");
+        } catch(err) {
+            console.log(err);
+        }
     }
 
     const matchedUserIds = user?.matches.map(({user_id}) => user_id).concat(cookies.UserId)
@@ -122,6 +158,26 @@ const Dashboard = () => {
                 <div style={{display: 'flex', flexDirection: 'row'}}>
                     <div className="nav-button" onClick={logout}>Logout</div>
                     <div className="nav-button" onClick={updateProfile}>Update</div>
+                    <div className="nav-button" onClick={openModal}>Delete</div>
+                    <Modal
+                        closeTimeoutMS={100}
+                        isOpen={modalIsOpen}
+                        onRequestClose={closeModal}
+                        style={customStyles}
+                        contentLabel="Example Modal"
+                    >
+                        {
+                            deleting ? 
+                            <h1>Deleting. . .</h1>
+                            :
+                            <>
+                                <h1>Are you sure you want to delete your account?</h1>
+                                <p>This action will permenanently remove all your information including any messages with others.</p>
+                                <button onClick={closeModal}>No</button>
+                                <button onClick={deleteProfile}>Yes</button>
+                            </>
+                        }
+                    </Modal>
                 </div>
             </nav>
             <div style={{flexGrow: '1'}} className="dashboard">
@@ -134,13 +190,13 @@ const Dashboard = () => {
                         {filteredGenre ? (filteredGenre.length > 0 ? filteredGenre.map(match =>
                             <TinderCard
                                 className="swipe"
+                                preventSwipe={['up', 'down']}
                                 key={match.user_id}
-                                onSwipe={(dir) => swiped(dir, match.user_id)}
-                                onCardLeftScreen={() => outOfFrame(match.first_name)}>
+                                onSwipe={(dir) => swiped(dir, match.user_id)}>
                                 <div className="card">
                                     <img src={SpotifyLogo} style={{height: '30px', width: 'auto', alignSelf: 'flex-end', marginRight: '20px'}}/>
                                     <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', width: '100%'}}>
-                                        <img style={{height: '100px', width: '100px', borderRadius: '10%', objectFit: 'cover'}} src={match.url}/>
+                                        <img style={{height: '100px', width: '100px', borderRadius: '10%', objectFit: 'cover'}} src={match.picture === "none" ? DefaultHeadshot : match.picture}/>
                                         <div style={{textAlign: 'left'}}>
                                             <h3>{match.first_name}</h3>
                                             <h4 style={{marginBottom: '15px'}}>{match.about}</h4>
@@ -177,7 +233,7 @@ const Dashboard = () => {
                                             </div> 
                                         </>
                                         : 
-                                        <h1 style={{marginTop: '100px'}}>No Top Tracks!</h1>
+                                        <h1 style={{marginTop: '100px', marginBottom: '100px'}}>No Top Tracks!</h1>
                                     }
                                     <p>Shared Genre Interests: </p>
                                     <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-around', width: '100%', flexWrap: 'wrap'}}>

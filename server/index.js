@@ -59,7 +59,7 @@ io.on('connection', client => {
 app.post("/authenticate", async (req, res) => {
     const client = new MongoClient(uri);
 
-    const { email, id, artists, tracks } = req.body;
+    const { email, id, artists, tracks, picture } = req.body;
 
     try {
         await client.connect()
@@ -79,13 +79,14 @@ app.post("/authenticate", async (req, res) => {
                 onboarded: false,
                 artists,
                 tracks,
+                picture,
             }
     
             await users.insertOne(data);
 
             res.status(201).json({token, userId: id, exists: false});
         } else {
-            await users.updateOne({email}, { $set: { artists: artists, tracks: tracks } })
+            await users.updateOne({email}, { $set: { artists: artists, tracks: tracks, picture: picture } })
 
             res.status(201).json({token, userId: existingUser.user_id, exists: true, onboarded: existingUser.onboarded})
         }
@@ -287,7 +288,6 @@ app.put('/user', async (req, res) => {
                 dob_month: formData.dob_month,
                 dob_year: formData.dob_year,
                 genres: genres,
-                url: formData.url,
                 about: formData.about,
                 matches: formData.matches,
                 onboarded: true,
@@ -335,6 +335,49 @@ app.post('/message', async (req, res) => {
 
         const insertedMessage = await messages.insertOne(message)
         res.send(insertedMessage)
+    } finally {
+        await client.close()
+    }
+})
+
+app.delete("/delete", async (req, res) => {
+    const client = new MongoClient(uri)
+    const userId = req.body.userId;
+
+    try {
+        await client.connect()
+        const database = client.db('app-data')
+        const users = database.collection('users')
+        const messages = database.collection('messages')
+
+        const query = {user_id: userId}
+        const user = await users.findOne(query)
+
+        const matchesLength = user.matches.length;
+
+        for(let match = 0; match < matchesLength; match++) {
+            let matchId = user.matches[match].user_id
+
+            await messages.deleteMany({
+                from_userId: userId, to_userId: matchId
+            });
+
+            await messages.deleteMany({
+                from_userId: matchId, to_userId: userId
+            });
+
+            const query = {user_id: matchId}
+
+            const updateDocument = {
+                $pull: {matches: {user_id: userId}}
+            }
+
+            await users.updateOne(query, updateDocument)
+        }
+
+        await users.deleteOne({user_id: userId});
+
+        res.send(201)
     } finally {
         await client.close()
     }

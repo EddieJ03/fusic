@@ -62,7 +62,6 @@ const OnBoarding = () => {
                     dob_day: response.data.dob_day,
                     dob_month: response.data.dob_month,
                     dob_year: response.data.dob_year,
-                    url: response.data.url,
                     about: response.data.about,
                     matches: response.data.matches,
                 }))
@@ -295,26 +294,6 @@ const OnBoarding = () => {
                         <input type="submit"/>
                         {onboarded ? <Link to="/dashboard">Dashboard</Link> : <></>}
                     </section>
-
-                    <section>
-
-                        <label htmlFor="url">Profile Photo</label>
-                        <input
-                            type="url"
-                            name="url"
-                            id="url"
-                            placeholder="Put Image Address"
-                            onChange={handleChange}
-                            required={true}
-                            value={formData.url}
-                        />
-                        <div className="photo-container">
-                            {formData.url && <img src={formData.url} alt="profile pic preview"/>}
-                        </div>
-
-
-                    </section>
-
                 </form>
             </div>
         </> : 

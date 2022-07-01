@@ -66,6 +66,7 @@ const Home = ({ setExpiresIn, setRefreshToken, setAccessToken }) => {
                 id: data.body.id,
                 artists: topArtists,
                 tracks: topTracks,
+                picture: data.body.images.length === 0 ? "none" : data.body.images[0].url
             })
     
             setCookie('AuthToken', res.data.token);
