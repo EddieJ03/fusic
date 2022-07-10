@@ -1,32 +1,174 @@
-import ChatHeader from './ChatHeader'
-import MatchesDisplay from './MatchesDisplay'
-import ChatDisplay from './ChatDisplay'
-import { useState } from 'react'
+import { useEffect, useState, useContext, useRef } from 'react';
+import DefaultHeadshot from '../assets/default_headshot.png';
+import { GlobalContext } from '../GlobalContext';
+import { useNavigate } from 'react-router-dom';
+import { useCookies } from 'react-cookie';
+import ChatDisplay from './ChatDisplay';
+import { toast } from 'react-toastify';
+import ChatHeader from './ChatHeader';
+import io from 'socket.io-client';
+import axios from 'axios';
 
-const ChatContainer = ({ user }) => {
-    const [ clickedUser, setClickedUser ] = useState(null)
+const ChatContainer = () => {
+    const [loading, setLoading] = useState(false);
+    const [matchedProfiles, setMatchedProfiles] = useState(null);
+    const [cookies, setCookie, removeCookie] = useCookies(null);
+    const [clickedUser, setClickedUser] = useState(null);
+    const [descendingOrderMessages, setDescendingOrderMessages] = useState();
+
+    useEffect(() => {
+        getMatches();
+
+        const newSocket = io.connect("https://fusic-app.herokuapp.com/");
+
+        newSocket.emit('join', {userId: cookies.UserId});
+
+        newSocket.on('message', ({message, user}) => {
+            console.log(`${user} sent a message!`);
+            newMessage(message, user);
+        });
+
+        setSocket(newSocket);
+
+        return () => {
+            newSocket.emit("leave", {userId: cookies.UserId});
+            newSocket.close();
+        }
+    }, [])
+
+    const notifyWarning = (text) => toast.warning(text);
+
+    let navigate = useNavigate();
+
+    const clear = () => {
+        notifyWarning("You need to login again!");
+        removeCookie('UserId', cookies.UserId)
+        removeCookie('AuthToken', cookies.AuthToken)
+        navigate("/");
+    }
+
+    const { user, setUser, setSocket } = useContext(GlobalContext);
+
+    const mapping = useRef(new Map());
+
+    const clicked = useRef(null);
+
+    function newMessage(message, user) {
+        if(user != cookies.UserId) {
+            if(clicked.current && user === clicked.current.user_id) {
+                const formattedMessage = {}
+                formattedMessage['name'] = clicked.current.first_name
+                formattedMessage['message'] = message.message
+                formattedMessage['timestamp'] = message.timestamp
+                formattedMessage['user'] = false
+                setDescendingOrderMessages(prevState => [...prevState, formattedMessage]);
+            } else {
+                let index = mapping.current.get(user);
+                console.log(index);
+                setMatchedProfiles(existingItems => {
+                    return [
+                      ...existingItems.slice(0, index),
+                      {...existingItems[index], newMessage: true},
+                      ...existingItems.slice(index + 1),
+                    ]
+                })
+            }
+        }
+    }
+
+    const getMatches = async () => {
+        setLoading(true);
+
+        try {
+            const response = await axios.get("/users", {
+                params: { userIds: JSON.stringify(user.matches.map(({ user_id }) => user_id)), userId: cookies.UserId },
+            });
+
+            const userResponse = response.data.user;
+            const matchesResponse = response.data.foundUsers;
+
+            setUser(userResponse);
+            setMatchedProfiles(matchesResponse.map((match, idx) => {
+                return {
+                    first_name: match.first_name, 
+                    user_id: match.user_id, 
+                    picture: match.picture, 
+                    matches: match.matches, 
+                    newMessage: userResponse.new_messages.includes(match.user_id), 
+                    new_messages: match.new_messages
+                }
+            }));
+    
+            matchesResponse.forEach((item, idx) => mapping.current.set(item.user_id, idx));
+        } catch(err) {
+            clear();
+        }
+
+        setLoading(false);
+    }
 
     return (
-        <div className="chat-container">
-            <ChatHeader user={user}/>
-
-            <div style={{padding: '10px'}}>
+        <>
+            <div className="chat-container">
+                <ChatHeader user={user}/>
                 {
-                    !clickedUser 
-                    ? 
-                    <></> 
+                    loading ? 
+                    <p style={{textAlign: 'center'}}>
+                        Loading . . .
+                    </p>
                     :
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-arrow-left-circle-fill" viewBox="0 0 16 16" onClick={() => setClickedUser(null)}>
-                        <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 7.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5z"/>
-                    </svg>
+                    <div className="matches-display">
+                        {matchedProfiles && matchedProfiles.map((match, _index) => (
+                        <div
+                            key={_index}
+                            className="match-card"
+                            onClick={() => {
+                                setClickedUser(match)
+                                clicked.current = match
+                                let index = mapping.current.get(match.user_id);
+                                setMatchedProfiles(existingItems => {
+                                    return [
+                                      ...existingItems.slice(0, index),
+                                      {...existingItems[index], newMessage: false},
+                                      ...existingItems.slice(index + 1),
+                                    ]
+                                })
+                                if(user.new_messages.includes(match.user_id)) {
+                                    axios.put("/update-new-message", {
+                                        data: { matchId: match.user_id, userId: cookies.UserId },
+                                    });
+                                }
+                            }}
+                        >
+                                <div className="match">
+                                    <div className="img-container">
+                                        <img src={match.picture === "none" ? DefaultHeadshot : match.picture} alt={match.first_name + " profile"} />
+                                    </div>
+                                    <h3 style={{marginLeft: '5px'}}>{match.first_name}</h3>
+                                    {
+                                        match.newMessage 
+                                        ? 
+                                        <div className="notification"></div> 
+                                        : 
+                                        <></>
+                                    }
+                                </div>
+                        </div>
+                        ))}
+                    </div>
                 }
-                <button className="option">{clickedUser ? 'Chat' : 'Friends'}</button>
             </div>
-
-            {!clickedUser && <MatchesDisplay matches={user.matches} setClickedUser={setClickedUser} />}
-
-            {clickedUser && <ChatDisplay user={user} clickedUser={clickedUser}/>}
-        </div>
+            {
+                clickedUser ? 
+                <ChatDisplay 
+                    descendingOrderMessages={descendingOrderMessages} 
+                    setDescendingOrderMessages={setDescendingOrderMessages} 
+                    clickedUser={clickedUser} 
+                    /> 
+                : 
+                <h1 style={{alignSelf: 'center', width: '69%'}}>Start By Clicking a Friend on the Left!</h1>
+            }
+        </>
     )
 }
 

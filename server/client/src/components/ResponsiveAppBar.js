@@ -1,24 +1,24 @@
-import { useState, useContext }from 'react';
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
+import DefaultHeadshot from '../assets/default_headshot.png';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import Menu from '@mui/material/Menu';
+import { GlobalContext } from '../GlobalContext';
 import MenuIcon from '@mui/icons-material/Menu';
 import Container from '@mui/material/Container';
+import MenuItem from '@mui/material/MenuItem';
+import {useNavigate} from 'react-router-dom';
+import { useState, useContext } from 'react';
+import Toolbar from '@mui/material/Toolbar';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
-import DefaultHeadshot from '../assets/default_headshot.png'
-import MenuItem from '@mui/material/MenuItem';
+import AppBar from '@mui/material/AppBar';
 import {useCookies} from 'react-cookie';
-import {useNavigate} from 'react-router-dom';
-import { GlobalContext } from '../GlobalContext';
+import Menu from '@mui/material/Menu';
+import Box from '@mui/material/Box';
 
 const ResponsiveAppBar = ({ setIsOpen, setChat }) => {
+  const [cookies, setCookie, removeCookie] = useCookies(null);
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
-  const [cookies, setCookie, removeCookie] = useCookies(null);
 
   const { user, socket } = useContext(GlobalContext);
 

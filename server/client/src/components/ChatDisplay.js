@@ -2,55 +2,40 @@ import io from 'socket.io-client'
 import ChatInput from './ChatInput'
 import axios from 'axios'
 import { useState, useEffect, useRef } from "react"
+import { toast } from 'react-toastify';
+import {useNavigate} from 'react-router-dom';
+import {useCookies} from 'react-cookie'
 
-
-const ChatDisplay = ({ user , clickedUser }) => {
+const ChatDisplay = ({ user , clickedUser, socket, descendingOrderMessages, setDescendingOrderMessages }) => {
     const userId = user?.user_id
     const clickedUserId = clickedUser?.user_id
     const [usersMessages, setUsersMessages] = useState(null);
     const [clickedUsersMessages, setClickedUsersMessages] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [room, setRoom] = useState("");
-    const [descendingOrderMessages, setDescendingOrderMessages] = useState();
-
-    // initialize socket
-    const [socket, setSocket] = useState(null);
+    const [cookies, setCookie, removeCookie] = useCookies(null);
 
     const chatContainer = useRef([]);
+
+    const notifyWarning = (text) => toast.warning(text);
+
+    let navigate = useNavigate();
+
+    const clear = () => {
+        notifyWarning("You need to login again!");
+        removeCookie('UserId', cookies.UserId)
+        removeCookie('AuthToken', cookies.AuthToken)
+        removeCookie('MatchesLength', cookies.MatchesLength)
+        navigate("/");
+    }
 
     useEffect(() => {
         setLoading(true);
         getUsersMessages();
         getClickedUsersMessages();
-
-        const newSocket = io.connect("http://localhost:8000");
-
-        setSocket(newSocket);
-
-        newSocket.emit("joinChat", {userId, clickedUserId});
-
-        newSocket.on('roomName', (data) => {
-            setRoom(data);
-        });
-
-        newSocket.on('message', ({message, user}) => {
-            if(user != userId) {
-                const formattedMessage = {}
-                formattedMessage['name'] = clickedUser?.first_name
-                formattedMessage['img'] = clickedUser?.url
-                formattedMessage['message'] = message.message
-                formattedMessage['timestamp'] = message.timestamp
-                formattedMessage['user'] = false
-                setDescendingOrderMessages(prevState => [...prevState, formattedMessage]);
-            }
-        });
-
-        return () => newSocket.close();
     }, [])
 
     useEffect(() => {
-        if(descendingOrderMessages && descendingOrderMessages.length > 20) {
-            console.log(chatContainer.current);
+        if(descendingOrderMessages && descendingOrderMessages.length > 15) {
             chatContainer.current.scrollTop = chatContainer.current.scrollHeight;
         }
     }, [descendingOrderMessages])
@@ -62,7 +47,6 @@ const ChatDisplay = ({ user , clickedUser }) => {
         usersMessages?.forEach(message => {
             const formattedMessage = {}
             formattedMessage['name'] = user?.first_name;
-            formattedMessage['img'] = user?.url;
             formattedMessage['message'] = message.message
             formattedMessage['timestamp'] = message.timestamp
             formattedMessage['user'] = true
@@ -72,7 +56,6 @@ const ChatDisplay = ({ user , clickedUser }) => {
         clickedUsersMessages?.forEach(message => {
             const formattedMessage = {}
             formattedMessage['name'] = clickedUser?.first_name
-            formattedMessage['img'] = clickedUser?.url
             formattedMessage['message'] = message.message
             formattedMessage['timestamp'] = message.timestamp
             formattedMessage['user'] = false
@@ -91,7 +74,7 @@ const ChatDisplay = ({ user , clickedUser }) => {
             })
             setUsersMessages(response.data);
         } catch (error) {
-            console.log(error)
+            clear();
         }
     }
 
@@ -102,34 +85,38 @@ const ChatDisplay = ({ user , clickedUser }) => {
             })
             setClickedUsersMessages(response.data);
         } catch (error) {
-            console.log(error)
+            clear();
         }
         setLoading(false);
     }
 
     return (
-        loading || !descendingOrderMessages 
-        ? 
-        <div style={{textAlign: 'center'}}>Loading. . .</div>
-        :
-        <>
-            <div className="chat-display" style={{height: '50vh'}} ref={chatContainer}>
-                {descendingOrderMessages.map((message, _index) => (
-                    <div key={_index}>
-                            <div style={{display: 'flex', justifyContent: message.user ? 'flex-end' : 'flex-start'}} >
-                                <p style={{backgroundColor: message.user ? '#add8e6' : 'red', height: '20px', textAlign: message.user ? 'right' : 'left', borderRadius: '10px', padding: '10px'}}>
-                                    {message.message}
-                                </p>
+        <div style={{display: 'flex', width: '70vw', flexDirection: 'column', alignItems: 'center', flexGrow: '1', maxHeight: '850px'}}>
+            {
+                loading || !descendingOrderMessages 
+                ? 
+                <div style={{textAlign: 'center'}}>Loading . . .</div>
+                :
+                <>
+                    <div className="chat-display" style={{maxHeight: '75%', flexGrow: '5'}} ref={chatContainer}>
+                        <div>Messages with {clickedUser.first_name}</div>
+                        {descendingOrderMessages.map((message, _index) => (
+                            <div key={_index}>
+                                    <div style={{display: 'flex', justifyContent: message.user ? 'flex-end' : 'flex-start'}} >
+                                        <p style={{backgroundColor: message.user ? '#add8e6' : 'red', height: '20px', textAlign: message.user ? 'right' : 'left', borderRadius: '10px', padding: '10px', margin: '5px'}}>
+                                            {message.message}
+                                        </p>
+                                    </div>
                             </div>
+                        ))}
                     </div>
-                ))}
-            </div>
-            <ChatInput
-                user={user}
-                socket={socket}
-                room={room}
-                clickedUser={clickedUser} getUserMessages={getUsersMessages} getClickedUsersMessages={getClickedUsersMessages} setDescendingOrderMessages={setDescendingOrderMessages}/>
-        </>
+                    <ChatInput
+                        user={user}
+                        socket={socket}
+                        clickedUser={clickedUser} getUserMessages={getUsersMessages} getClickedUsersMessages={getClickedUsersMessages} setDescendingOrderMessages={setDescendingOrderMessages}/>
+                </>
+            }
+        </div>
     )
 }
 

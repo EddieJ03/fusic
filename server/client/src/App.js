@@ -1,12 +1,13 @@
-import Home from './pages/Home'
-import Dashboard from './pages/Dashboard'
-import OnBoarding from './pages/OnBoarding'
-import EmptyPage from './pages/EmptyPage'
-import {BrowserRouter, Route, Routes} from 'react-router-dom'
-import { useCookies } from 'react-cookie'
-import { useState, useEffect } from 'react'
-import axios from 'axios'
-import spotifyApi from './constants/SpotifyWebApi'
+import {BrowserRouter, Route, Routes} from 'react-router-dom';
+import spotifyApi from './constants/SpotifyWebApi';
+import { GlobalProvider } from './GlobalContext';
+import OnBoarding from './pages/OnBoarding';
+import { useState, useEffect } from 'react';
+import Dashboard from './pages/Dashboard';
+import EmptyPage from './pages/EmptyPage';
+import { useCookies } from 'react-cookie';
+import Home from './pages/Home';
+import axios from 'axios';
 
 const App = () => {
     const [cookies, setCookie, removeCookie] = useCookies(['user']);
@@ -41,14 +42,16 @@ const App = () => {
     }, [accessToken])
 
     return (
-        <BrowserRouter>
+        <GlobalProvider>
+          <BrowserRouter>
             <Routes>
-                <Route exact path="/" element={<Home setExpiresIn={setExpiresIn} setRefreshToken={setRefreshToken} setAccessToken={setAccessToken}/>}/>
+                <Route exact path="/" element={<Home  setExpiresIn={setExpiresIn} setRefreshToken={setRefreshToken} setAccessToken={setAccessToken}/>}/>
                 <Route path="/dashboard" element={<Dashboard />}/>
-                <Route path="/onboarding" element={<OnBoarding/>}/>
+                <Route path="/onboarding" element={<OnBoarding />}/>
                 <Route path="/*" element={<EmptyPage/>} />
             </Routes>
-        </BrowserRouter>
+          </BrowserRouter>
+        </GlobalProvider>
     )
 }
 

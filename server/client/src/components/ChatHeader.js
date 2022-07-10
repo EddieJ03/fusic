@@ -1,10 +1,6 @@
-import { useCookies } from 'react-cookie'
-import { useNavigate } from 'react-router-dom'
 import DefaultHeadshot from '../assets/default_headshot.png'
 
 const ChatHeader = ({ user }) => {
-    const [cookies, setCookie, removeCookie ] = useCookies(['user']);
-
     return (
         <div className="chat-container-header">
             <div className="profile">

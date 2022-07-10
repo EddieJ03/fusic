@@ -1,7 +1,10 @@
-import { useState} from 'react'
-import axios from 'axios'
 
-const ChatInput = ({ user, clickedUser, getUserMessages, getClickedUsersMessages, socket, room, setDescendingOrderMessages }) => {
+import { GlobalContext } from '../GlobalContext';
+import { useState, useContext } from 'react';
+import axios from 'axios';
+
+const ChatInput = ({ clickedUser, setDescendingOrderMessages }) => {
+    const { user, socket } = useContext(GlobalContext);
     const [textArea, setTextArea] = useState("")
     const userId = user?.user_id
     const clickedUserId = clickedUser?.user_id
@@ -18,7 +21,7 @@ const ChatInput = ({ user, clickedUser, getUserMessages, getClickedUsersMessages
         setDescendingOrderMessages(prevState => [...prevState, message]);
 
         try {
-            socket.emit("newMessage", {chatName: room, message: message, userId: userId});
+            socket.emit("newMessage", {message: message, userId: userId, clickedUserId: clickedUserId});
             setTextArea("");
             await axios.post('/message', { message })
         } catch (error) {
@@ -26,11 +29,16 @@ const ChatInput = ({ user, clickedUser, getUserMessages, getClickedUsersMessages
         }
     }
 
-
     return (
         <div className="chat-input">
-            <textarea value={textArea} onChange={(e) => setTextArea(e.target.value)} style={{resize: 'none', height: '80px'}}/>
-            <button style={{marginTop: '15px'}} className="primary-button" onClick={addMessage}>Submit</button>
+            <input 
+                value={textArea} 
+                onChange={(e) => setTextArea(e.target.value)} 
+                style={{resize: 'none', height: '40px', fontSize: '20px', width: '80%'}} 
+                />
+            <button className="primary-button" style={{marginLeft: '15px'}} onClick={addMessage}>
+                SEND
+            </button>
         </div>
     )
 }

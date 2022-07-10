@@ -7,6 +7,10 @@ const { Server } = require('socket.io');
 const path = require('path')
 require('dotenv').config()
 const SpotifyWebApi = require('spotify-web-api-node');
+const AuthMiddleware = require("./AuthMiddleware.js")
+
+const { InMemorySessionStore } = require("./sessionStore");
+const sessionStore = new InMemorySessionStore();
 
 const uri = process.env.MONGO_URI
 const app = express();
@@ -16,44 +20,32 @@ app.use(require('cors')());
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:3000",
+        origin: "https://fusic-app.herokuapp.com/",
         methods: ["GET", "POST"]
     }
 });
 
 io.on('connection', client => {
-    client.on('joinChat', ({userId, clickedUserId}) => {
-        let room1 = userId + clickedUserId;
-        let room2 = clickedUserId + userId;
-        let clients1 = numberOfClients(room1);
-        let clients2 = numberOfClients(room2);
+    client.on('join', ({userId}) => {
+        sessionStore.saveSession(userId, client.id);
+    })
 
-        if(clients1 == 0 && clients2 == 0) {
-            client.join(room1);
-            client.emit('roomName', room1);
-        } else if(clients1 > 0) {
-            client.join(room1);
-            client.emit('roomName', room1);
-        } else {
-            client.join(room2);
-            client.emit('roomName', room2);
-        }
-    });
-
-    client.on('newMessage', ({chatName, message, userId}) => {
-        io.sockets.in(chatName)
+    client.on('newMessage', async ({message, userId, clickedUserId}) => {
+        if(sessionStore.contains(clickedUserId)) {
+            io.sockets.to(sessionStore.findSession(clickedUserId))
             .emit('message', {message, user: userId});
+        } else {
+            const client = new MongoClient(uri);
+            await client.connect()
+            const database = client.db('app-data')
+            const users = database.collection('users')
+            await users.updateOne({user_id: clickedUserId}, { $addToSet: { new_messages: userId } })
+        }
     });
 
-    function numberOfClients(roomName) {
-        let room = io.sockets.adapter.rooms.get(roomName);
-        
-        if(room) {
-            return room.size;
-        }
-
-        return 0;
-    }
+    client.on('leave', ({userId}) => {
+        sessionStore.delete(userId);
+    })
 })
 
 app.post("/authenticate", async (req, res) => {
@@ -69,7 +61,7 @@ app.post("/authenticate", async (req, res) => {
         const existingUser = await users.findOne({email});
 
         const token = jwt.sign({user_id: id}, process.env.JWT_SECRET, {
-            expiresIn: 60 * 24
+            expiresIn: 60 * 24 * 60
         });
 
         if(!existingUser) {
@@ -80,39 +72,19 @@ app.post("/authenticate", async (req, res) => {
                 artists,
                 tracks,
                 picture,
+                new_messages: []
             }
     
             await users.insertOne(data);
 
-            res.status(201).json({token, userId: id, exists: false});
+            res.status(201).json({token, userId: id});
         } else {
             await users.updateOne({email}, { $set: { artists: artists, tracks: tracks, picture: picture } })
 
-            res.status(201).json({token, userId: existingUser.user_id, exists: true, onboarded: existingUser.onboarded})
+            res.status(201).json({token, userId: existingUser.user_id, onboarded: existingUser.onboarded, existingUser: existingUser})
         }
     } catch (err) {
         res.status(400).json('Invalid Credentials');
-    }
-})
-
-app.get("/verify", (req, res) => {
-    const { authorization } = req.headers
-
-    if (!authorization) {
-        // Status code 401 means unauthorized
-        return res.status(401).json({verified: false})
-    } else {
-        // authorization looks like "Bearer {token}"
-        const token = authorization.replace("Bearer ", "")
-
-        jwt.verify(token, process.env.JWT_SECRET, (err, payload) => {
-            if (err) {
-                console.log(err)
-                return res.status(401).json({verified: false})
-            } else {
-                return res.status(201).json({verified: true})
-            }
-        })
     }
 })
 
@@ -140,7 +112,6 @@ app.post("/spotify", (req, res) => {
         res.send(tokens);
     })
     .catch(err => {
-        console.log(err);
         res.send('Error Authenticating With Spotify')
     })
 })
@@ -168,8 +139,31 @@ app.post("/refresh", (req, res) => {
        })
 })
 
+// Update User with a match
+app.put('/addmatch', AuthMiddleware, async (req, res) => {
+    const client = new MongoClient(uri)
+    const {userId, matchedUserId} = req.body
+
+    try {
+        await client.connect()
+        const database = client.db('app-data')
+        const users = database.collection('users')
+
+        const query = {user_id: userId}
+        const updateDocument = {
+            $push: {matches: {user_id: matchedUserId}}
+        }
+        await users.updateOne(query, updateDocument)
+        const match = await users.findOne({user_id: matchedUserId})
+        console.log(match);
+        res.send(match.matches.filter(e => e.user_id === userId).length > 0)
+    } finally {
+        await client.close()
+    }
+})
+
 // Get individual user
-app.get('/user', async (req, res) => {
+app.get('/user', AuthMiddleware, async (req, res) => {
     const client = new MongoClient(uri)
     const userId = req.query.userId
 
@@ -187,89 +181,91 @@ app.get('/user', async (req, res) => {
     }
 })
 
-// Update User with a match
-app.put('/addmatch', async (req, res) => {
+app.put('/update-new-message', async (req,res) => {
     const client = new MongoClient(uri)
-    const {userId, matchedUserId} = req.body
+    const {userId, matchId} = req.body.data;
+
+    console.log(userId, matchId);
 
     try {
         await client.connect()
         const database = client.db('app-data')
         const users = database.collection('users')
 
-        const query = {user_id: userId}
-        const updateDocument = {
-            $push: {matches: {user_id: matchedUserId}}
+        const query = {
+            'user_id': userId
         }
-        const user = await users.updateOne(query, updateDocument)
-        res.send(user)
+
+        await users.updateOne(query, {$pull: {new_messages: matchId}});
+
+        res.sendStatus(200);
     } finally {
         await client.close()
     }
 })
 
 // Get all Users by userIds in the Database
-app.get('/users', async (req, res) => {
+app.get('/users', AuthMiddleware, async (req, res) => {
     const client = new MongoClient(uri)
     const userIds = JSON.parse(req.query.userIds)
+    const userId = req.query.userId
 
     try {
         await client.connect()
         const database = client.db('app-data')
         const users = database.collection('users')
 
-        const pipeline =
-            [
-                {
-                    '$match': {
-                        'user_id': {
-                            '$in': userIds
-                        }
-                    }
-                }
-            ]
+        const query = {
+            'user_id': {
+                '$in': userIds
+            }
+        }
 
-        const foundUsers = await users.aggregate(pipeline).toArray()
+        const foundUsers = await users.find(query).toArray();
+        const user = await users.findOne({user_id: userId});
 
-        res.json(foundUsers)
-
+        res.json({foundUsers: foundUsers.filter((user) => user.matches.find(match => match.user_id === userId)), user: user});
     } finally {
         await client.close()
     }
 })
 
 // Get all the Matching Genre Users in the Database
-app.get('/same-genre-users', async (req, res) => {
+app.get('/same-genre-users', AuthMiddleware, async (req, res) => {
     const client = new MongoClient(uri)
     const genres = req.query.genres
+    const matches = JSON.parse(req.query.matches)
+    const userId = req.query.userId;
 
     try {
-        await client.connect()
-        const database = client.db('app-data')
-        const users = database.collection('users')
-        let allUsers = await users.find({}).toArray();
-        let allMatchingUsers = [];
-        
-        for(let i = 0; i < allUsers.length; i++) {
-            if(allUsers[i].onboarded) {
-                let userGenres = allUsers[i].genres;
-                for(let j = 0; j < userGenres.length; j++) {
-                    if(genres.includes(userGenres[j])) {
-                        allMatchingUsers.push(allUsers[i]);
-                        break;
-                    }
+        await client.connect();
+        const database = client.db('app-data');
+        const users = database.collection('users');
+
+        const query = {
+            $and: [
+                {
+                    user_id: { $ne: userId }
+                },
+                {
+                    user_id: { $nin: matches.map(e=>e.user_id) }
+                },
+                {
+                    genres: { $elemMatch: { $in: genres } }
                 }
-            }
+            ]
         }
+
+        let allUsers = await users.find(query).toArray();
         
-        res.json(allMatchingUsers);
+        res.json(allUsers);
     } finally {
         await client.close()
     }
 })
 
 // Update a User in the Database
-app.put('/user', async (req, res) => {
+app.put('/user', AuthMiddleware, async (req, res) => {
     const client = new MongoClient(uri)
     const formData = req.body.formData
     const genres = req.body.genres
@@ -293,18 +289,15 @@ app.put('/user', async (req, res) => {
                 onboarded: true,
             },
         }
-
-        const insertedUser = await users.updateOne(query, updateDocument)
-
-        res.json(insertedUser)
-
+        const updatedUser = await users.findOneAndUpdate(query, updateDocument, {returnDocument: "after"});
+        res.status(200).send(updatedUser);
     } finally {
         await client.close()
     }
 })
 
 // Get Messages by from_userId and to_userId
-app.get('/messages', async (req, res) => {
+app.get('/messages', AuthMiddleware, async (req, res) => {
     const {userId, correspondingUserId} = req.query
     const client = new MongoClient(uri)
 
@@ -340,7 +333,7 @@ app.post('/message', async (req, res) => {
     }
 })
 
-app.delete("/delete", async (req, res) => {
+app.delete("/delete", AuthMiddleware, async (req, res) => {
     const client = new MongoClient(uri)
     const userId = req.body.userId;
 
@@ -369,7 +362,8 @@ app.delete("/delete", async (req, res) => {
             const query = {user_id: matchId}
 
             const updateDocument = {
-                $pull: {matches: {user_id: userId}}
+                $pull: {matches: {user_id: userId}},
+                $pull: {new_messages: userId}
             }
 
             await users.updateOne(query, updateDocument)
@@ -377,7 +371,7 @@ app.delete("/delete", async (req, res) => {
 
         await users.deleteOne({user_id: userId});
 
-        res.send(201)
+        res.sendStatus(201)
     } finally {
         await client.close()
     }
@@ -385,17 +379,17 @@ app.delete("/delete", async (req, res) => {
 
 //-------------------DEPLOYMENT----------------//
 // ORDER MATTERS! THIS MUST BE BELOW ALL ROUTES ABOVE
-// if (process.env.NODE_ENV === "production") {
-//     app.use(express.static(path.join(__dirname, "/client/build")));
+if (process.env.NODE_ENV === "production") {
+    app.use(express.static(path.join(__dirname, "/client/build")));
   
-//     app.get("*", (req, res) =>
-//       res.sendFile(path.resolve(__dirname, "client", "build", "index.html"))
-//     );
-// } else {
-//     app.get("/", (req, res) => {
-//       res.send("API is running...");
-//     });
-// }
+    app.get("*", (req, res) =>
+      res.sendFile(path.resolve(__dirname, "client", "build", "index.html"))
+    );
+} else {
+    app.get("/", (req, res) => {
+      res.send("API is running...");
+    });
+}
 
 server.listen(PORT, () => {
     console.log('server running on PORT ' + PORT)

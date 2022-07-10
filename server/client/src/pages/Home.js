@@ -1,14 +1,17 @@
-import {useState,useEffect} from 'react'
-import {useCookies} from "react-cookie"
-import { useLocation, useNavigate } from 'react-router-dom'
-import axios from 'axios'
-import spotifyApi from '../constants/SpotifyWebApi.js'
+import { useLocation, useNavigate } from 'react-router-dom';
+import spotifyApi from '../constants/SpotifyWebApi.js';
+import {useState,useEffect,useContext} from 'react';
+import { GlobalContext } from '../GlobalContext';
+import {useCookies} from "react-cookie";
+import axios from 'axios';
 
 const AUTH_URL = `${process.env.REACT_APP_URL}`;
 
 const Home = ({ setExpiresIn, setRefreshToken, setAccessToken }) => {
     const [loading, setLoading] = useState(null);
     const [cookies, setCookie, removeCookie] = useCookies(['user']);
+
+    const { setUser } = useContext(GlobalContext);
 
     let location = useLocation();
     let navigate = useNavigate();
@@ -68,14 +71,18 @@ const Home = ({ setExpiresIn, setRefreshToken, setAccessToken }) => {
                 tracks: topTracks,
                 picture: data.body.images.length === 0 ? "none" : data.body.images[0].url
             })
-    
-            setCookie('AuthToken', res.data.token);
-            setCookie('UserId', res.data.userId);
 
-            if(res.data.onboarded) {
+            const profile = res.data;
+    
+            setCookie('AuthToken', profile.token);
+            setCookie('UserId', profile.userId);
+
+            if(profile.onboarded) {
+                setUser(profile.existingUser);
                 setLoading(false);
                 navigate('/dashboard');
             } else {
+                setUser({genres: []})
                 setLoading(false);
                 navigate('/onboarding');
             }
@@ -106,4 +113,5 @@ const Home = ({ setExpiresIn, setRefreshToken, setAccessToken }) => {
             </div>
     )
 }
+
 export default Home

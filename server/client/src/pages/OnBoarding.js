@@ -1,14 +1,38 @@
-import {useState, useEffect} from 'react'
-import {useCookies} from 'react-cookie'
-import {useNavigate, Link} from 'react-router-dom'
-import axios from 'axios'
+import { useState, useEffect, useContext } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { GlobalContext } from '../GlobalContext';
+import { useCookies } from 'react-cookie';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 
 const OnBoarding = () => {
     const [cookies, setCookie, removeCookie] = useCookies(['user']);
-    const [onboarded, setOnboarded] = useState(false);
     const [genres, setGenres] = useState([]);
-    const [loading, setLoading] = useState(true);
+
+    const { user, setUser } = useContext(GlobalContext);   
+    
+    const [formData, setFormData] = useState({
+        user_id: cookies.UserId,
+        first_name: user && user.onboarded ? user.first_name : "",
+        dob_day: user && user.onboarded ? user.dob_day : "",
+        dob_month: user && user.onboarded ? user.dob_month : "",
+        dob_year: user && user.onboarded ? user.dob_year : "",
+        about: user && user.onboarded ? user.about : "",
+        matches: user && user.onboarded ? user.matches : []
+    }) 
+    
+    useEffect(() => {
+        if(!cookies.AuthToken || !cookies.UserId) {
+            clear();
+            return;
+        }
+
+        if(!user) {
+            getUser();
+        } else {
+            setGenres(user.genres);
+        }
+    }, [])
 
     let navigate = useNavigate();
 
@@ -21,57 +45,30 @@ const OnBoarding = () => {
         navigate("/");
     }
 
-    useEffect(() => {
-        if(!cookies.AuthToken || !cookies.UserId) {
-            clear();
-        }
-        getUser();
-    }, [])
-
-    const [formData, setFormData] = useState({
-        user_id: cookies.UserId,
-        first_name: "",
-        dob_day: "",
-        dob_month: "",
-        dob_year: "",
-        url: "",
-        about: "",
-        matches: [],
-    })
-
     const getUser = async () => {
         try {
-            const verifyToken = await axios.get('/verify', {
-                headers: {
-                  Authorization: 'Bearer ' + cookies.AuthToken 
-                }
-            })
-
-            if(!verifyToken.data.verified) {
-                clear();
-            }
-
             const response = await axios.get('/user', {
                 params: {userId: cookies.UserId}
             })
 
+            if(!response.data.onboarded) navigate("/onboarding");
+
+            setUser(response.data)
+
             if(response.data.onboarded) {
-                setFormData((prevState) => ({
-                    ...prevState,
+                setGenres(response.data.genres);
+                setFormData({
+                    user_id: cookies.UserId,
                     first_name: response.data.first_name,
                     dob_day: response.data.dob_day,
                     dob_month: response.data.dob_month,
                     dob_year: response.data.dob_year,
                     about: response.data.about,
                     matches: response.data.matches,
-                }))
-                setOnboarded(response.data.onboarded);
-                setGenres(prevState => [...prevState, ...response.data.genres])
+                })
             }
-
-            setLoading(false);
         } catch (error) {
-            clear()
+            clear();
         }
     }
 
@@ -80,9 +77,12 @@ const OnBoarding = () => {
         try {
             const response = await axios.put('/user', {formData, genres});
             const success = response.status === 200
-            if (success) navigate('/dashboard')
+            if (success) {
+                setUser(response.data.value);
+                navigate('/dashboard')
+            }
         } catch (err) {
-            console.log(err)
+            clear()
         }
 
     }
@@ -106,13 +106,12 @@ const OnBoarding = () => {
     }
 
     return (
-        cookies.AuthToken && !loading ? 
+        cookies.AuthToken && user ? 
         <>
             <div className="onboarding">
                 <h1 style={{margin: '0px', padding: '10px'}}>SET PROFILE</h1>
-
                 <form onSubmit={handleSubmit}>
-                    <section>
+                    <div>
                         <label htmlFor="first_name">Name</label>
                         <input
                             id="first_name"
@@ -131,6 +130,8 @@ const OnBoarding = () => {
                                 type="number"
                                 name="dob_day"
                                 placeholder="DD"
+                                min="1"
+                                max="31"
                                 required={true}
                                 value={formData.dob_day}
                                 onChange={handleChange}
@@ -141,6 +142,8 @@ const OnBoarding = () => {
                                 type="number"
                                 name="dob_month"
                                 placeholder="MM"
+                                min="1"
+                                max="12"
                                 required={true}
                                 value={formData.dob_month}
                                 onChange={handleChange}
@@ -281,7 +284,7 @@ const OnBoarding = () => {
                             <label htmlFor="latinmusic">Latin Music</label>
                         </div>
                         <label htmlFor="about">Bio</label>
-                        <input
+                        <textarea
                             id="about"
                             type="text"
                             name="about"
@@ -292,12 +295,14 @@ const OnBoarding = () => {
                         />
 
                         <input type="submit"/>
-                        {onboarded ? <Link to="/dashboard">Dashboard</Link> : <></>}
-                    </section>
+                        {user.onboarded ? <Link to="/dashboard">Dashboard</Link> : <></>}
+                    </div>
                 </form>
             </div>
         </> : 
-        <></>
+        <>
+            Loading . . .
+        </>
     )
 }
 export default OnBoarding
