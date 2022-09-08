@@ -81,7 +81,7 @@ const Dashboard = () => {
         try {
             await axios.delete("/delete", {
                 data: {
-                    userId: cookies.UserId
+                    userId: cookies.UserId,
                 }
             });
             removeCookie('UserId', cookies.UserId)

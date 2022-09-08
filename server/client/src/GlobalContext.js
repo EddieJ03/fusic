@@ -24,12 +24,24 @@ export const GlobalProvider = ({ children }) => {
   }
 
   function addMatch(match) {
-    console.log(match);
     dispatch({
       type: 'ADD_MATCH',
       payload: {user_id: match}
     })
-    console.log(state.user);
+  }
+
+  function addSwipedLeft(match) {
+    dispatch({
+      type: 'ADD_SWIPED_LEFT',
+      payload: { user_id: match }
+    })
+  }
+
+  function addSwipedRight(match) {
+    dispatch({
+      type: 'ADD_SWIPED_RIGHT',
+      payload: { user_id: match }
+    })
   }
 
   function setSocket(socket) {
@@ -54,6 +66,8 @@ export const GlobalProvider = ({ children }) => {
     addMatch,
     setSocket,
     setClickedUser,
+    addSwipedLeft,
+    addSwipedRight
   }}>
     {children}
   </GlobalContext.Provider>);

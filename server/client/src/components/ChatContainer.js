@@ -19,7 +19,7 @@ const ChatContainer = () => {
     useEffect(() => {
         getMatches();
 
-        const newSocket = io.connect("https://fusic-app.herokuapp.com/");
+        const newSocket = io.connect("http://localhost:8000");
 
         newSocket.emit('join', {userId: cookies.UserId});
 
@@ -80,26 +80,25 @@ const ChatContainer = () => {
         setLoading(true);
 
         try {
-            const response = await axios.get("/users", {
-                params: { userIds: JSON.stringify(user.matches.map(({ user_id }) => user_id)), userId: cookies.UserId },
+            const response = await axios.get("/matched-users", {
+                params: { userId: cookies.UserId, userIds: JSON.stringify(user.matches) },
             });
 
             const userResponse = response.data.user;
-            const matchesResponse = response.data.foundUsers;
+            const matches = response.data.matches;
 
             setUser(userResponse);
-            setMatchedProfiles(matchesResponse.map((match, idx) => {
+            setMatchedProfiles(matches.map((match, idx) => {
                 return {
                     first_name: match.first_name, 
                     user_id: match.user_id, 
                     picture: match.picture, 
-                    matches: match.matches, 
                     newMessage: userResponse.new_messages.includes(match.user_id), 
                     new_messages: match.new_messages
                 }
             }));
     
-            matchesResponse.forEach((item, idx) => mapping.current.set(item.user_id, idx));
+            matches.forEach((item, idx) => mapping.current.set(item.user_id, idx));
         } catch(err) {
             clear();
         }
@@ -112,13 +111,13 @@ const ChatContainer = () => {
             <div className="chat-container">
                 <ChatHeader user={user}/>
                 {
-                    loading ? 
+                    loading || !matchedProfiles ? 
                     <p style={{textAlign: 'center'}}>
                         Loading . . .
                     </p>
                     :
                     <div className="matches-display">
-                        {matchedProfiles && matchedProfiles.map((match, _index) => (
+                        {matchedProfiles.map((match, _index) => (
                         <div
                             key={_index}
                             className="match-card"
@@ -133,6 +132,7 @@ const ChatContainer = () => {
                                       ...existingItems.slice(index + 1),
                                     ]
                                 })
+
                                 if(user.new_messages.includes(match.user_id)) {
                                     axios.put("/update-new-message", {
                                         data: { matchId: match.user_id, userId: cookies.UserId },

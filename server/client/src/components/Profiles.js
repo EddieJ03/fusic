@@ -11,9 +11,10 @@ import axios from 'axios';
 function Profiles() {
     const [loading, setLoading] = useState(false);
     const [matchGenreUsers, setMatchGenreUsers] = useState(null);
+    const [numberOfUsers, setNumberOfUsers] = useState(0);
     const [cookies, setCookie, removeCookie] = useCookies(null);
 
-    const { user, addMatch } = useContext(GlobalContext);
+    const { user, addMatch, addSwipedLeft, addSwipedRight } = useContext(GlobalContext);
 
     useEffect(() => {
         getMatchGenre();
@@ -36,25 +37,55 @@ function Profiles() {
         setLoading(true);
         try {
             const response = await axios.get('/same-genre-users', {
-                params: {matches: JSON.stringify(user.matches), genres: user.genres, userId: cookies.UserId}
+                params: {  
+                    big_object: JSON.stringify({
+                        swiped_left: user.swiped_left, 
+                        matches: user.matches, 
+                        genres: user.genres, 
+                        userId: cookies.UserId, 
+                        swiped_right: user.swiped_right,
+                    })
+                }
             })
-            setMatchGenreUsers(response.data)
+            
+            setMatchGenreUsers(response.data);
+            setNumberOfUsers(response.data.length);
         } catch (error) {
             clear();
         }
         setLoading(false);
     }
 
-    const updateMatches = async (matchedUserId, otherUser) => {
+    const updateMatches = async (direction, match) => {
+        const matchedUserId = match.user_id;
+        const otherUser = match.first_name;
+        const pic = match.picture;
+
         try {
-            addMatch(matchedUserId);
+            if(direction === "left") {
+                await axios.put('/nomatch', {
+                    userId: user.user_id,
+                    matchedUserId
+                });
+
+                addSwipedLeft(matchedUserId);
+                
+                return;
+            }
+
             const response = await axios.put('/addmatch', {
                 userId: cookies.UserId,
-                matchedUserId
-            })
+                matchedUserId,
+            });
+
             if(response.data) {
+                addMatch(matchedUserId);
                 notifySuccess(`Matched with ${otherUser}`);
+            } else {
+                addSwipedRight(matchedUserId);
             }
+
+            setNumberOfUsers(numberOfUsers - 1);
         } catch (err) {
             clear()
         }
@@ -63,12 +94,12 @@ function Profiles() {
   return (
     <div className="swipe-container">
         <div className="card-container">
-            {matchGenreUsers ? (matchGenreUsers.length > 0 ? matchGenreUsers.map(match =>
+            {matchGenreUsers ? (numberOfUsers > 0 ? matchGenreUsers.map(match =>
                 <TinderCard
                     className="swipe"
                     preventSwipe={['up', 'down']}
                     key={match.user_id}
-                    onSwipe={() => updateMatches(match.user_id, match.first_name)}>
+                    onSwipe={(direction) => updateMatches(direction, match)}>
                     <div className="card">
                         <img className="spotify-logo" src={SpotifyLogo} />
                         <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', width: '100%'}}>

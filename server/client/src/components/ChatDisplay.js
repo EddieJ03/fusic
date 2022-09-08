@@ -1,14 +1,13 @@
-import io from 'socket.io-client'
 import ChatInput from './ChatInput'
 import axios from 'axios'
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useContext } from "react"
 import { toast } from 'react-toastify';
 import {useNavigate} from 'react-router-dom';
-import {useCookies} from 'react-cookie'
+import {useCookies} from 'react-cookie';
+import {GlobalContext} from '../GlobalContext'
 
-const ChatDisplay = ({ user , clickedUser, socket, descendingOrderMessages, setDescendingOrderMessages }) => {
-    const userId = user?.user_id
-    const clickedUserId = clickedUser?.user_id
+const ChatDisplay = ({ clickedUser, descendingOrderMessages, setDescendingOrderMessages }) => {
+    const { user } = useContext(GlobalContext);
     const [usersMessages, setUsersMessages] = useState(null);
     const [clickedUsersMessages, setClickedUsersMessages] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -16,17 +15,8 @@ const ChatDisplay = ({ user , clickedUser, socket, descendingOrderMessages, setD
 
     const chatContainer = useRef([]);
 
-    const notifyWarning = (text) => toast.warning(text);
-
-    let navigate = useNavigate();
-
-    const clear = () => {
-        notifyWarning("You need to login again!");
-        removeCookie('UserId', cookies.UserId)
-        removeCookie('AuthToken', cookies.AuthToken)
-        removeCookie('MatchesLength', cookies.MatchesLength)
-        navigate("/");
-    }
+    const userId = user?.user_id
+    const clickedUserId = clickedUser?.user_id
 
     useEffect(() => {
         setLoading(true);
@@ -67,6 +57,18 @@ const ChatDisplay = ({ user , clickedUser, socket, descendingOrderMessages, setD
         setDescendingOrderMessages(prevState => [...prevState, ...messages]);
     }, [usersMessages, clickedUsersMessages])
 
+    const notifyWarning = (text) => toast.warning(text);
+
+    let navigate = useNavigate();
+
+    const clear = () => {
+        notifyWarning("You need to login again!");
+        removeCookie('UserId', cookies.UserId)
+        removeCookie('AuthToken', cookies.AuthToken)
+        removeCookie('MatchesLength', cookies.MatchesLength)
+        navigate("/");
+    }
+
     const getUsersMessages = async () => {
         try {
             const response = await axios.get('/messages', {
@@ -91,19 +93,29 @@ const ChatDisplay = ({ user , clickedUser, socket, descendingOrderMessages, setD
     }
 
     return (
-        <div style={{display: 'flex', width: '70vw', flexDirection: 'column', alignItems: 'center', flexGrow: '1', maxHeight: '850px'}}>
+        <div className="chat-display-container">
             {
                 loading || !descendingOrderMessages 
                 ? 
-                <div style={{textAlign: 'center'}}>Loading . . .</div>
+                <div style={{textAlign: 'center'}}>
+                    Loading . . .
+                </div>
                 :
                 <>
-                    <div className="chat-display" style={{maxHeight: '75%', flexGrow: '5'}} ref={chatContainer}>
-                        <div>Messages with {clickedUser.first_name}</div>
+                    <div className="chat-display" ref={chatContainer}>
+                        <div>
+                            Messages with {clickedUser.first_name}
+                        </div>
                         {descendingOrderMessages.map((message, _index) => (
                             <div key={_index}>
-                                    <div style={{display: 'flex', justifyContent: message.user ? 'flex-end' : 'flex-start'}} >
-                                        <p style={{backgroundColor: message.user ? '#add8e6' : 'red', height: '20px', textAlign: message.user ? 'right' : 'left', borderRadius: '10px', padding: '10px', margin: '5px'}}>
+                                    <div style={{display: 'flex', 
+                                                 justifyContent: message.user ? 'flex-end' : 'flex-start'}}>
+                                        <p style={{backgroundColor: message.user ? '#add8e6' : 'red', 
+                                                   height: '20px', 
+                                                   textAlign: message.user ? 'right' : 'left', 
+                                                   borderRadius: '10px', 
+                                                   padding: '10px', 
+                                                   margin: '5px'}}>
                                             {message.message}
                                         </p>
                                     </div>
@@ -111,9 +123,9 @@ const ChatDisplay = ({ user , clickedUser, socket, descendingOrderMessages, setD
                         ))}
                     </div>
                     <ChatInput
-                        user={user}
-                        socket={socket}
-                        clickedUser={clickedUser} getUserMessages={getUsersMessages} getClickedUsersMessages={getClickedUsersMessages} setDescendingOrderMessages={setDescendingOrderMessages}/>
+                        clickedUser={clickedUser} 
+                        setDescendingOrderMessages={setDescendingOrderMessages}
+                        />
                 </>
             }
         </div>

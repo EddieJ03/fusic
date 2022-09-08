@@ -139,6 +139,7 @@ nav .logo-container .logo {
 .onboarding {
     background-color: #77b5d9;
     color: white;
+    height: 100vh;
 }
 
 .onboarding form {
@@ -146,20 +147,10 @@ nav .logo-container .logo {
     justify-content: center;
 }
 
-.onboarding form div {
-    display: flex;
-    flex-direction: column;
-    padding: 20px;
-    width: 50%;
-    text-align: start;
-
-}
-
 .onboarding form input {
     padding: 15px 30px;
     margin: 10px 0;
     font-size: 15px;
-    border: solid 2px rgb(219, 219, 219);
     border-radius: 10px;
 }
 
