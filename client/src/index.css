@@ -1,0 +1,433 @@
+@import url('https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;500;600;700;800&display=swap');
+
+html, body {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+
+* {
+    font-family: 'Readex Pro', sans-serif;
+}
+
+.primary-title {
+    font-size: 90px;
+    color: rgb(255, 255, 255);
+}
+
+.primary-button {
+    color: rgb(255,255,255);
+    text-transform: uppercase;
+    font-size: 15px;
+    background-color: #14397d;
+    padding: 12px 30px;
+    border-radius: 30px;
+    border: none;
+}
+
+.primary-button:hover {
+    background-color: #1c4288;
+    cursor: pointer;
+}
+
+.secondary-button {
+    color: rgb(121, 119, 119);
+    background-color: rgb(255, 255, 255);
+    font-weight: 500;
+    font-size: 15px;
+    text-transform: uppercase;
+    padding: 12px 30px;
+    border-radius: 30px;
+    border: solid 2px rgb(121, 119, 119);
+    margin: 6px;
+}
+
+.secondary-button:hover {
+    color: rgb(48, 48, 48);
+    border: solid 2px rgb(48, 48, 48);
+    cursor: pointer;
+}
+
+
+/*-------- Navbar --------*/
+
+nav {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    background-color: #77b5d9;
+    color: white;
+}
+
+nav .nav-button {
+    color: white;
+    background-color: #14397d;
+    font-size: 20px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    margin: 10px;
+}
+
+nav .nav-button:hover {
+    cursor: pointer;
+    background-color: #1c4288;
+}
+
+nav .logo-container {
+    width: 170px;
+    margin: 15px;
+}
+
+nav .logo-container .logo {
+    width: 100%;
+}
+
+/*-------- Home page --------*/
+.overlay {
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    background-color: #77b5d9;
+}
+
+.home {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #d7eaf3;
+}
+
+/*-------- Auth Modal --------*/
+.auth-modal {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50px;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 360px;
+    height: 600px;
+    background-color: rgb(255, 255, 255);
+    border-radius: 10px;
+    padding: 40px;
+}
+
+.auth-modal .close-icon {
+    float: right;
+}
+
+.auth-modal .close-icon:hover {
+    cursor: pointer;
+}
+
+.auth-modal form {
+    display: flex;
+    flex-direction: column;
+}
+
+.auth-modal input[type=password],
+.auth-modal input[type=email] {
+    padding: 8px;
+    margin: 8px;
+    font-size: 17px;
+}
+
+/*-------- OnBoarding Page --------*/
+.onboarding {
+    background-color: #77b5d9;
+    color: white;
+    height: 100vh;
+}
+
+.onboarding form {
+    display: flex;
+    justify-content: center;
+}
+
+.onboarding form input {
+    padding: 15px 30px;
+    margin: 10px 0;
+    font-size: 15px;
+    border-radius: 10px;
+}
+
+.onboarding form textarea {
+    padding: 15px 30px;
+    margin: 10px 0;
+    font-size: 15px;
+    border: solid 2px rgb(219, 219, 219);
+    border-radius: 10px;
+    resize: none;
+    height: 150px;
+}
+
+.onboarding form label {
+    margin: 10px 0;
+}
+
+.onboarding form .multiple-input-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.onboarding form input::-webkit-outer-spin-button,
+.onboarding form input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.onboarding form .multiple-input-container input {
+    margin-right: 10px;
+}
+
+.onboarding form .multiple-input-container label {
+    padding: 10px;
+    border: solid 2px #14397d;
+    border-radius: 10px;
+    transition: all 0.3s;
+    margin-right: 10px;
+}
+
+.onboarding form input[type=checkbox] {
+    display: none;
+}
+
+.onboarding form input[type="checkbox"] + label:hover {
+    cursor: pointer;
+}
+
+.onboarding form input[type=number] {
+    width: 10%;
+}
+
+.onboarding form input[type=checkbox]:checked + label {
+    border: solid 2px white;
+}
+
+.onboarding form input[type=submit]:hover {
+    background-color: #1c4288;
+    cursor: pointer;
+}
+
+.onboarding form input[type=submit] {
+    background-color: #14397d;
+    color: white;
+}
+
+.onboarding form .photo-container img {
+    width: 100%
+}
+
+/*-------- Dashboard  --------*/
+.dashboard {
+    display: flex;
+    justify-content: space-between;
+}
+
+.dashboard .swipe-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #d7eaf3;
+}
+
+.swipe {
+    position: absolute;
+}
+
+.dashboard .card-container {
+    width: 500px;
+    height: 700px;
+}
+
+.card {
+    width: 500px;
+    height: 700px;
+    border-radius: 30px;
+    background-size: cover;
+    background-position: center;
+    background-color: #14397d;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.card h3 {
+    margin-top: 0;
+}
+
+/*-------- Chat Container --------*/
+.chat-container {
+    background-color: rgb(255, 255, 255);
+    box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px,
+    rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
+    width: 30vw;
+    text-align: left;
+    z-index: 1;
+}
+
+.chat-container .chat-container-header {
+    background-color: #14397d;
+    height: 100px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-container .option {
+    border: none;
+    background-color: rgb(255, 255, 255);
+    border-bottom: solid 4px #77b5d9;
+    font-size: 20px;
+    margin: 2px;
+    padding: 10px;
+}
+
+.chat-container .option:disabled {
+    border-bottom: solid 4px rgb(187, 187, 187);
+}
+
+.chat-container .profile {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    color: rgb(255, 255, 255);
+}
+
+
+.img-container img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.match {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.match:hover {
+    cursor: pointer;
+    background-color: #d7eaf3;
+}
+
+.notification {
+    height: 10px;
+    width: 10px;
+    background-color: red;
+    margin-left: 10px;
+    border-radius: 50%;
+}
+
+/*-------- Chat Display --------*/
+.matches-display {
+    padding: 20px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    height: 70vh;
+}
+
+.chat-display-container {
+   display: flex;
+   width: 70vw;
+   flex-direction: column;
+   align-items: center;
+   flex-grow: 1;
+   max-height: 850px;
+}
+
+.chat-display {
+    width: 100%;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    max-height: 75%;
+    flex-grow: 5;
+}
+
+.chat-message-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+/*-------- Chat Input --------*/
+.chat-input {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 25%;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+}
+
+/*------ Chat Header-------*/
+.button-style {
+    height: 30px;
+    width: 75px;
+    background-color: #14397d;
+    color: white;
+    text-align: center;
+    border-radius: 10%;
+    padding-top: 5px;
+}
+
+.button-style:hover {
+    cursor: pointer;
+    background-color: #1c4288;
+}
+
+.bi-arrow-left-circle-fill:hover {
+    cursor: pointer;
+}
+
+.ReactModal__Overlay {
+    opacity: 0;
+    transition: opacity 1000ms ease-in-out;
+}
+
+.ReactModal__Overlay--after-open{
+    opacity: 1;
+}
+
+.ReactModal__Overlay--before-close{
+    opacity: 0;
+}
+
+#refresh-matches {
+    float: right;
+    margin-right: 10px;
+}
+
+#refresh-matches:hover {
+    cursor: pointer;
+}
+
+.new-message {
+    background-color: green;
+}
+
+.genre {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.spotify-logo {
+    height: 30px;
+    width: auto;
+    align-self: flex-end;
+    margin-right: 20px;
+}
