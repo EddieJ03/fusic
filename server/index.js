@@ -1,6 +1,6 @@
 const PORT = process.env.PORT || 8000;
 const express = require('express')
-const {MongoClient} = require('mongodb')
+const { MongoClient } = require('mongodb')
 const jwt = require('jsonwebtoken')
 const http = require('http');
 const { Server } = require('socket.io');
@@ -10,7 +10,7 @@ const SpotifyWebApi = require('spotify-web-api-node');
 const AuthMiddleware = require("./AuthMiddleware.js");
 
 const Redis = require('ioredis');
-const redisClient = new Redis();
+const redisClient = new Redis({host: 'redis-server'});
 
 const uri = process.env.MONGO_URI
 const app = express();

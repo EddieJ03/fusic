@@ -22,7 +22,7 @@ const ChatDisplay = ({ clickedUser, descendingOrderMessages, setDescendingOrderM
         setLoading(true);
         getUsersMessages();
         getClickedUsersMessages();
-    }, [])
+    }, [clickedUser])
 
     useEffect(() => {
         if(descendingOrderMessages && descendingOrderMessages.length > 15) {

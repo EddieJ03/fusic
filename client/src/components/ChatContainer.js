@@ -64,7 +64,6 @@ const ChatContainer = () => {
                 setDescendingOrderMessages(prevState => [...prevState, formattedMessage]);
             } else {
                 let index = mapping.current.get(user);
-                console.log(index);
                 setMatchedProfiles(existingItems => {
                     return [
                       ...existingItems.slice(0, index),
